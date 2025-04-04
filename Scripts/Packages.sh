@@ -62,6 +62,9 @@ UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 # UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
 # UPDATE_PACKAGE "qmodem" "FUjr/modem_feeds" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
+
+UPDATE_PACKAGE "adguardhome" "kenzok8/small-package" "main" "" "luci-app-adguardhome adguardhome"
+
 # UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 if [[ $WRT_REPO != *"immortalwrt"* ]]; then
