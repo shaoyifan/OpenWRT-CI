@@ -63,7 +63,7 @@ UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 # UPDATE_PACKAGE "qmodem" "FUjr/modem_feeds" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
 
-UPDATE_PACKAGE "adguardhome" "xiaoxiao29/small-package" "master" "" "luci-app-adguardhome AdGuardHome"
+UPDATE_PACKAGE "adguardhome" "xiaoxiao29/luci-app-adguardhome" "master" "" "luci-app-adguardhome AdGuardHome"
 
 # UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
