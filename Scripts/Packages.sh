@@ -107,7 +107,7 @@ UPDATE_VERSION() {
 }
 
 add_ax6600_led() {
-    local athena_led_dir="$BUILD_DIR/package/emortal/luci-app-athena-led"
+    local athena_led_dir="../package/emortal/luci-app-athena-led"
     local repo_url="https://github.com/shaoyifan/luci-app-athena-led.git"
 
     echo "正在添加 luci-app-athena-led..."
