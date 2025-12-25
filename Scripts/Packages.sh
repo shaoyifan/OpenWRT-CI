@@ -126,9 +126,18 @@ add_ax6600_led() {
         exit 1
     fi
 }
+remove_attendedsysupgrade() {
+    find "../feeds/luci/collections" -name "Makefile" | while read -r makefile; do
+        if grep -q "luci-app-attendedsysupgrade" "$makefile"; then
+            sed -i "/luci-app-attendedsysupgrade/d" "$makefile"
+            echo "Removed luci-app-attendedsysupgrade from $makefile"
+        fi
+    done
+}
 
 
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
 add_ax6600_led
+remove_attendedsysupgrade
