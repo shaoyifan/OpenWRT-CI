@@ -60,10 +60,10 @@ UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
-UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
-UPDATE_PACKAGE "van" "shaoyifan/packages" "main" "" "luci-app-adguardhome adguardhome"
-UPDATE_PACKAGE "luci-app-bandix" "timsaya/luci-app-bandix" "main" "" "luci-app-bandix"
-UPDATE_PACKAGE "bandix" "timsaya/openwrt-bandix" "main" "" "openwrt-bandix"
+
+UPDATE_PACKAGE "athena-led" "shaoyifan/packages" "main" "" "luci-app-athena-led"
+
+
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
@@ -132,4 +132,4 @@ add_ax6600_led() {
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
-add_ax6600_led
+# add_ax6600_led
