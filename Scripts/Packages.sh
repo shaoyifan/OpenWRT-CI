@@ -140,6 +140,8 @@ update_ax6600_led() {
         echo "错误：未找到目录 $athena_led_dir" >&2
         exit 1
     fi
+	ls -l "$athena_led_dir"
+	cat "$athena_led_dir/Makefile"
 }
 
 
