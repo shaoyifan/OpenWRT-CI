@@ -61,8 +61,7 @@ UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 
-UPDATE_PACKAGE "athena-led" "shaoyifan/packages" "main" "" "luci-app-athena-led"
-
+UPDATE_PACKAGE "app-adguardhome" "shaoyifan/packages" "main" "" "luci-app-adguardhome"
 
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
@@ -109,23 +108,38 @@ UPDATE_VERSION() {
 
 update_ax6600_led() {
     local athena_led_dir="../package/emortal/luci-app-athena-led"
-    local repo_url="https://github.com/shaoyifan/luci-app-athena-led.git"
+    local repo_url="https://github.com/shaoyifan/packages.git"  # 改成你要的仓库
+    local temp_dir="./temp_packages"  # 临时目录
 
-    echo "正在添加 luci-app-athena-led..."
-    rm -rf "$athena_led_dir" 2>/dev/null
+    echo "正在添加 luci-app-athena-led ..."
+    rm -rf "$athena_led_dir" "$temp_dir" 2>/dev/null
 
-    # if ! git clone --depth=1 "$repo_url" "$athena_led_dir"; then
-    #     echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
-    #     exit 1
-    # fi
+    # 1. 克隆整个仓库到临时目录
+    if ! git clone --depth=1 "$repo_url" "$temp_dir"; then
+        echo "错误：克隆仓库失败" >&2
+        exit 1
+    fi
 
-    # if [ -d "$athena_led_dir" ]; then
-    #     chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
-    #     chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
-    # else
-    #     echo "错误：克隆操作后未找到目录 $athena_led_dir" >&2
-    #     exit 1
-    # fi
+    # 2. 只把 luci-app-athena-led 文件夹移动到目标位置（核心）
+    if [ -d "$temp_dir/luci-app-athena-led" ]; then
+        mv "$temp_dir/luci-app-athena-led" "$athena_led_dir"
+    else
+        echo "错误：未找到 luci-app-athena-led 文件夹" >&2
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    # 3. 删除临时仓库
+    rm -rf "$temp_dir"
+
+    # 你原来的权限设置 完全不变
+    if [ -d "$athena_led_dir" ]; then
+        chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
+        chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
+    else
+        echo "错误：未找到目录 $athena_led_dir" >&2
+        exit 1
+    fi
 }
 
 
