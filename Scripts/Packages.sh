@@ -154,6 +154,9 @@ add_ax6600_led() {
         chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
         chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
         echo "权限设置成功！"
+		ls -l "$athena_led_dir"
+		cat "$athena_led_dir/Makefile"
+		make package/emortal/luci-app-athena-led/compile V=s
     else
         echo "错误：未找到 root 目录，请检查仓库结构" >&2
         exit 1
