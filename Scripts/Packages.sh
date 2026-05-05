@@ -63,6 +63,18 @@ UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 
 UPDATE_PACKAGE "app-adguardhome" "shaoyifan/packages" "main" "" "luci-app-adguardhome"
 
+
+remove_athena-led(){
+	local athena_led_dir="../package/emortal/luci-app-athena-led"
+	if [ -d "$athena_led_dir" ]; then
+		rm -rf "$athena_led_dir"
+		echo "Deleted directory: $athena_led_dir"
+	else
+		echo "Directory not found: $athena_led_dir"
+	fi
+}
+remove_athena-led
+UPDATE_PACKAGE "app-athena_led" "shaoyifan/packages" "main" "" "luci-app-athena_led"
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
@@ -148,4 +160,4 @@ update_ax6600_led() {
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
-update_ax6600_led
+# update_ax6600_led
