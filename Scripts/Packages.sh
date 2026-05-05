@@ -72,7 +72,9 @@ remove_athena-led(){
 	fi
 }
 remove_athena-led
-UPDATE_PACKAGE "van" "shaoyifan/packages" "main" "" "luci-app-athena-led luci-app-adguardhome"
+UPDATE_PACKAGE "luci-app-athena-led" "shaoyifan/packages" "main" "pkg" ""
+
+UPDATE_PACKAGE "luci-app-adguardhome" "shaoyifan/packages" "main" "pkg" ""
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
