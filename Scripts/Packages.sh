@@ -61,8 +61,6 @@ UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 
-UPDATE_PACKAGE "app-adguardhome" "shaoyifan/packages" "main" "" "luci-app-adguardhome"
-
 
 remove_athena-led(){
 	local athena_led_dir="../package/emortal/luci-app-athena-led"
@@ -74,7 +72,7 @@ remove_athena-led(){
 	fi
 }
 remove_athena-led
-UPDATE_PACKAGE "app-athena_led" "shaoyifan/packages" "main" "" "luci-app-athena_led"
+UPDATE_PACKAGE "app-van" "shaoyifan/packages" "main" "" "luci-app-athena_led luci-app-adguardhome"
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
