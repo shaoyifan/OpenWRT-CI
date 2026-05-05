@@ -62,19 +62,7 @@ UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 
 
-remove_athena-led(){
-	local athena_led_dir="../package/emortal/luci-app-athena-led"
-	if [ -d "$athena_led_dir" ]; then
-		rm -rf "$athena_led_dir"
-		echo "Deleted directory: $athena_led_dir"
-	else
-		echo "Directory not found: $athena_led_dir"
-	fi
-}
-remove_athena-led
-UPDATE_PACKAGE "luci-app-athena-led" "shaoyifan/packages" "main" "pkg" ""
-
-UPDATE_PACKAGE "luci-app-adguardhome" "shaoyifan/packages" "main" "pkg" ""
+UPDATE_PACKAGE "adguardhome" "sirpdboy/luci-app-adguardhome" "js"
 # UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
 # UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
@@ -118,46 +106,30 @@ UPDATE_VERSION() {
 	done
 }
 
-update_ax6600_led() {
-    local athena_led_dir="../package/emortal/luci-app-athena-led"
-    local repo_url="https://github.com/shaoyifan/packages.git"  # 改成你要的仓库
-    local temp_dir="./temp_packages"  # 临时目录
+add_ax6600_led() {
+    local athena_led_dir="$BUILD_DIR/package/emortal/luci-app-athena-led"
+    local repo_url="https://github.com/Sh1rokoDev/luci-app-athena-led.git"
+	local branch_name="LuCI2-JS"  # 定义分支变量
+    echo "正在添加 luci-app-athena-led..."
+    rm -rf "$athena_led_dir" 2>/dev/null
 
-    echo "正在添加 luci-app-athena-led ..."
-    rm -rf "$athena_led_dir" "$temp_dir" 2>/dev/null
-
-    # 1. 克隆整个仓库到临时目录
-    if ! git clone --depth=1 "$repo_url" "$temp_dir"; then
-        echo "错误：克隆仓库失败" >&2
+    if ! git clone --depth=1 -b "$branch_name" "$repo_url" "$athena_led_dir"; then
+        echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
         exit 1
     fi
 
-    # 2. 只把 luci-app-athena-led 文件夹移动到目标位置（核心）
-    if [ -d "$temp_dir/luci-app-athena-led" ]; then
-        mv "$temp_dir/luci-app-athena-led" "$athena_led_dir"
-    else
-        echo "错误：未找到 luci-app-athena-led 文件夹" >&2
-        rm -rf "$temp_dir"
-        exit 1
-    fi
-
-    # 3. 删除临时仓库
-    rm -rf "$temp_dir"
-
-    # 你原来的权限设置 完全不变
     if [ -d "$athena_led_dir" ]; then
         chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
         chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
     else
-        echo "错误：未找到目录 $athena_led_dir" >&2
+        echo "错误：克隆操作后未找到目录 $athena_led_dir" >&2
         exit 1
     fi
-	ls -l "$athena_led_dir"
-	cat "$athena_led_dir/Makefile"
 }
+
 
 
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
-# update_ax6600_led
+add_ax6600_led
