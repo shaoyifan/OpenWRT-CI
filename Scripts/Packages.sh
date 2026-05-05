@@ -106,27 +106,59 @@ UPDATE_VERSION() {
 	done
 }
 
+# add_ax6600_led() {
+#     local athena_led_dir="../package/emortal/luci-app-athena-led"
+#     local repo_url="https://github.com/Sh1rokoDev/luci-app-athena-led.git"
+# 	local branch_name="LuCI2-JS"  # 定义分支变量
+#     echo "正在添加 luci-app-athena-led..."
+#     rm -rf "$athena_led_dir" 2>/dev/null
+
+#     if ! git clone --depth=1 -b "$branch_name" "$repo_url" "$athena_led_dir"; then
+#         echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
+#         exit 1
+#     fi
+
+#     if [ -d "$athena_led_dir" ]; then
+#         chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
+#         chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
+#     else
+#         echo "错误：克隆操作后未找到目录 $athena_led_dir" >&2
+#         exit 1
+#     fi
+# }
+
 add_ax6600_led() {
     local athena_led_dir="../package/emortal/luci-app-athena-led"
     local repo_url="https://github.com/Sh1rokoDev/luci-app-athena-led.git"
-	local branch_name="LuCI2-JS"  # 定义分支变量
+    local branch_name="LuCI2-JS"
+    
     echo "正在添加 luci-app-athena-led..."
     rm -rf "$athena_led_dir" 2>/dev/null
 
+    # 1. 克隆仓库
     if ! git clone --depth=1 -b "$branch_name" "$repo_url" "$athena_led_dir"; then
-        echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
+        echo "错误：克隆失败" >&2
         exit 1
     fi
 
-    if [ -d "$athena_led_dir" ]; then
+    # 2. 关键步骤：解决目录嵌套问题
+    # 如果发现下载下来里面还有一个同名目录，就把里面的内容移出来
+    if [ -d "$athena_led_dir/luci-app-athena-led" ]; then
+        echo "检测到目录嵌套，正在优化结构..."
+        cp -r "$athena_led_dir/luci-app-athena-led/." "$athena_led_dir/"
+        rm -rf "$athena_led_dir/luci-app-athena-led"
+    fi
+
+    # 3. 执行赋权 (此时路径就变回正常的 "$athena_led_dir/root/..." 了)
+    if [ -d "$athena_led_dir/root" ]; then
         chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
         chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
+        echo "权限设置成功！"
     else
-        echo "错误：克隆操作后未找到目录 $athena_led_dir" >&2
+        echo "错误：未找到 root 目录，请检查仓库结构" >&2
         exit 1
     fi
 }
-
 
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
