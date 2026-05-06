@@ -133,6 +133,16 @@ add_i18n_adguardhome() {
 		echo "$GITHUB_WORKSPACE 成功加入翻译文件" >&2
 	fi
 }
+add_backup_info_to_sysupgrade() {
+    local conf_path="../package/base-files/files/etc/sysupgrade.conf"
+
+    if [ -f "$conf_path" ]; then
+        cat >"$conf_path" <<'EOF'
+/etc/adguardhome/adguardhome.yaml
+ 
+EOF
+    fi
+}
 
 
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
