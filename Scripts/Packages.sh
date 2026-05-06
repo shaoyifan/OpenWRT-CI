@@ -112,7 +112,7 @@ add_ax6600_led() {
     echo "正在添加 luci-app-athena-led..."
     rm -rf "$athena_led_dir" 2>/dev/null
 
-    if ! git clone --depth=1 "$repo_url" "$athena_led_dir"; then
+    if ! git clone -b js --depth=1 "$repo_url" "$athena_led_dir"; then
         echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
         exit 1
     fi
