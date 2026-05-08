@@ -81,7 +81,7 @@ REPO_URL="https://github.com/shaoyifan/luci-app-athena-led.git"
 
 # 清理旧目录并尝试克隆
 rm -rf "$ATHENA_LED_DIR" 2>/dev/null
-if git clone --depth=1 "$REPO_URL" "$ATHENA_LED_DIR"; then
+if git clone -b js --depth=1 "$REPO_URL" "$ATHENA_LED_DIR"; then
     echo " "
     
     # 设置脚本执行权限
