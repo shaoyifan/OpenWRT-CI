@@ -99,7 +99,7 @@ if git clone -b LuCI2-JS --depth=1 "$REPO_URL" "$TEMP_DIR"; then
         sed -i 's/@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02//g' "$MAKEFILE_PATH"
         echo "@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02 remove!"
     fi
-
+	cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
     # 再次确认并设置执行权限
     # 注意：如果子文件夹里路径有变化，请检查这里
     [ -f "$ATHENA_LED_DIR/root/usr/sbin/athena-led" ] && chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
