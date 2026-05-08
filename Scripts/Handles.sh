@@ -130,3 +130,21 @@ if [ -f "$PATCH_WIFI" ]; then
 
     echo "dashboard wifi file has been replaced!"
 fi
+
+
+# --- 10. 修复 nlbwmon 流量统计 (重载 nf_conntrack 模块) ---
+NLBWMON_INIT="../feeds/packages/net/nlbwmon/files/nlbwmon.init"
+
+if [ -f "$NLBWMON_INIT" ]; then
+    echo " "
+
+    # 检查是否已经修改过，避免重复添加
+    if ! grep -q "rmmod nf_conntrack_netlink" "$NLBWMON_INIT"; then
+        # 在 start_service() { 这一行之后插入两行命令
+        sed -i '/start_service() {/a \	rmmod nf_conntrack_netlink\n	modprobe nf_conntrack_netlink' "$NLBWMON_INIT"
+        
+        echo "nlbwmon init script has been fixed!"
+    else
+        echo "nlbwmon init script is already patched."
+    fi
+fi
