@@ -50,20 +50,10 @@ UPDATE_PACKAGE() {
 # UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
 # UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "js"
 
-UPDATE_PACKAGE "homeproxy" "VIKINGYFY/homeproxy" "main"
-UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
 UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
-
 
 UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 
-UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
-UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
-UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
-UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
- 
-# UPDATE_PACKAGE "argon" "jerrykuku/luci-theme-argon" "master"
-# UPDATE_PACKAGE "argon-config" "jerrykuku/luci-app-argon-config" "master"
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
@@ -105,48 +95,6 @@ UPDATE_VERSION() {
 	done
 }
 
-add_ax6600_led() {
-    local athena_led_dir="../package/emortal/luci-app-athena-led"
-    local repo_url="https://github.com/shaoyifan/luci-app-athena-led.git"
-
-    echo "正在添加 luci-app-athena-led..."
-    rm -rf "$athena_led_dir" 2>/dev/null
-
-    if ! git clone --depth=1 "$repo_url" "$athena_led_dir"; then
-        echo "错误：从 $repo_url 克隆 luci-app-athena-led 仓库失败" >&2
-        exit 1
-    fi
-
-    if [ -d "$athena_led_dir" ]; then
-        chmod +x "$athena_led_dir/root/usr/sbin/athena-led"
-        chmod +x "$athena_led_dir/root/etc/init.d/athena_led"
-    else
-        echo "错误：克隆操作后未找到目录 $athena_led_dir" >&2
-        exit 1
-    fi
-}
-
- 
-add_i18n_adguardhome() {
-	if [ -f ../feeds/luci/applications/luci-app-adguardhome/Makefile ]; then
-		cp -r $GITHUB_WORKSPACE/Scripts/patches/adg/po/** ../feeds/luci/applications/luci-app-adguardhome/po/
-		echo "$GITHUB_WORKSPACE 成功加入翻译文件" >&2
-	fi
-}
-add_backup_info_to_sysupgrade() {
-    local conf_path="../package/base-files/files/etc/sysupgrade.conf"
-
-    if [ -f "$conf_path" ]; then
-        cat >"$conf_path" <<'EOF'
-/etc/adguardhome/adguardhome.yaml
- 
-EOF
-    fi
-}
-
-
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
-add_ax6600_led
-add_i18n_adguardhome

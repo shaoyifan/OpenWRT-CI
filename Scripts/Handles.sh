@@ -75,12 +75,53 @@ if [ -f "$RUST_FILE" ]; then
 	cd $PKG_PATH && echo "rust has been fixed!"
 fi
 
-#修复DiskMan编译失败
-DM_FILE="./luci-app-diskman/applications/luci-app-diskman/Makefile"
-if [ -f "$DM_FILE" ]; then
-	echo " "
+# 添加并配置 luci-app-athena-led
+ATHENA_LED_DIR="../package/emortal/luci-app-athena-led"
+REPO_URL="https://github.com/shaoyifan/luci-app-athena-led.git"
 
-	sed -i '/ntfs-3g-utils /d' $DM_FILE
+# 清理旧目录并尝试克隆
+rm -rf "$ATHENA_LED_DIR" 2>/dev/null
+if git clone --depth=1 "$REPO_URL" "$ATHENA_LED_DIR"; then
+    echo " "
+    
+    # 设置脚本执行权限
+    chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
+    chmod +x "$ATHENA_LED_DIR/root/etc/init.d/athena_led"
 
-	cd $PKG_PATH && echo "diskman has been fixed!"
+    echo "luci-app-athena-led has been added and fixed!"
+fi
+
+
+# 修复 AdGuardHome 翻译
+ADG_PATH="../feeds/luci/applications/luci-app-adguardhome"
+PATCH_PO="$GITHUB_WORKSPACE/Scripts/patches/adg/po"
+
+if [ -d "$ADG_PATH" ]; then
+    echo " "
+
+    # 复制翻译文件
+    cp -rf "$PATCH_PO"/* "$ADG_PATH/po/"
+
+    echo "luci-app-adguardhome translations have been fixed!"
+fi
+
+# --- 8. 添加 AdGuardHome 备份路径到 sysupgrade ---
+SYS_CONF="../package/base-files/files/etc/sysupgrade.conf"
+if [ -f "$SYS_CONF" ]; then
+    echo " "
+    cat > "$SYS_CONF" <<'EOF'
+/etc/adguardhome/adguardhome.yaml
+EOF
+    echo "sysupgrade backup info has been updated!"
+fi
+
+# --- 9. 修改 Dashboard 页面 WiFi 百分比 ---
+DASHBOARD_WIFI="../feeds/luci/modules/luci-mod-dashboard/htdocs/luci-static/resources/view/dashboard/include/30_wifi.js"
+if [ -f "$DASHBOARD_WIFI" ]; then
+    echo " "
+    
+    # 将 45% 修改为 35%
+    sed -i 's/45%/35%/g' "$DASHBOARD_WIFI"
+
+    echo "dashboard wifi threshold has been fixed!"
 fi
