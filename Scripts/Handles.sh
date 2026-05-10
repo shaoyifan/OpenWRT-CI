@@ -83,14 +83,15 @@ if [ -f "$MAKEFILE_PATH" ]; then
     # 移除特定的硬件依赖
     sed -i 's/@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02//g' "$MAKEFILE_PATH"
     echo "@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02 remove!"
-fi
-cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
+    cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
 # # 再次确认并设置执行权限
 # # 注意：如果子文件夹里路径有变化，请检查这里
 # [ -f "$ATHENA_LED_DIR/root/usr/sbin/athena-led" ] && chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
 # [ -f "$ATHENA_LED_DIR/root/etc/init.d/athena_led" ] && chmod +x "$ATHENA_LED_DIR/root/etc/init.d/athena_led"
 
 echo "luci-app-athena-led has been added and fixed!"
+fi
+
 
 
 # 修复 AdGuardHome 翻译
