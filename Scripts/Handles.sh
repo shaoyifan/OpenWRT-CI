@@ -132,21 +132,6 @@ EOF
     echo "sysupgrade backup info has been updated!"
 fi
 
-# --- 9. 替换 Dashboard 页面 WiFi 配置文件 ---
-DASHBOARD_WIFI="../feeds/luci/modules/luci-mod-dashboard/htdocs/luci-static/resources/view/dashboard/include/30_wifi.js"
-PATCH_WIFI="$GITHUB_WORKSPACE/Scripts/patches/dashboard/30_wifi.js"
-
-if [ -f "$PATCH_WIFI" ]; then
-    echo " "
-
-    # 创建目标目录（防止初次同步时目录未创建）
-    mkdir -p "$(dirname "$DASHBOARD_WIFI")"
-    
-    # 直接替换文件
-    cp -f "$PATCH_WIFI" "$DASHBOARD_WIFI"
-
-    echo "dashboard wifi file has been replaced!"
-fi
 
 
 # --- 10. 修复 nlbwmon 流量统计 (重载 nf_conntrack 模块) ---
