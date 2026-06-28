@@ -53,7 +53,7 @@ UPDATE_PACKAGE() {
 UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 
 UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
-UPDATE_PACKAGE "netspeedtest" "sirpdboy/netspeedtest" "main" "" "homebox ookla-speedtest luci-app-netspeedtest"
+UPDATE_PACKAGE "netspeedtest" "muink/luci-app-netspeedtest" "master"
 
 #更新软件包版本
 UPDATE_VERSION() {
