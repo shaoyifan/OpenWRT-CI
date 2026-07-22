@@ -132,42 +132,4 @@ EOF
     echo "sysupgrade backup info has been updated!"
 fi
 
-
-
-# --- 10. 修复 nlbwmon 流量统计 (重载 nf_conntrack 模块) ---
-NLBWMON_INIT="../feeds/packages/net/nlbwmon/files/nlbwmon.init"
-
-if [ -f "$NLBWMON_INIT" ]; then
-    echo " "
-
-    # 检查是否已经修改过，避免重复添加
-    if ! grep -q "rmmod nf_conntrack_netlink" "$NLBWMON_INIT"; then
-        # 在 start_service() { 这一行之后插入两行命令
-        sed -i '/start_service() {/a \	rmmod nf_conntrack_netlink\n	modprobe nf_conntrack_netlink' "$NLBWMON_INIT"
-        
-        echo "nlbwmon init script has been fixed!"
-    else
-        echo "nlbwmon init script is already patched."
-    fi
-fi
-
-
-# --- XX. 逆向修复 netdata 因上游翻车导致的编译失败 ---
-NETDATA_MAKEFILE="../feeds/packages/admin/netdata/Makefile"
-
-if [ -f "$NETDATA_MAKEFILE" ]; then
-    echo " "
-
-    # 1. 检查是否是翻车的第 4 版，如果是，强行降回第 3 版
-    if grep -q "PKG_RELEASE:=4" "$NETDATA_MAKEFILE"; then
-        sed -i 's/PKG_RELEASE:=4/PKG_RELEASE:=3/g' "$NETDATA_MAKEFILE"
-        echo "netdata PKG_RELEASE has been reverted to 3."
-    fi
-
-    # 2. 检查并移除惹祸的 -std=gnu17 参数，恢复成原本的 -O3 结尾
-    if grep -q "\-std=gnu17" "$NETDATA_MAKEFILE"; then
-        # 将包含 -std=gnu17 的那一行整行替换回原本安全的编译参数
-        sed -i 's/TARGET_CFLAGS := \$(filter-out -O%,\$(TARGET_CFLAGS)) -O3 -std=gnu17/TARGET_CFLAGS := \$(filter-out -O%,\$(TARGET_CFLAGS)) -O3/g' "$NETDATA_MAKEFILE"
-        echo "netdata gnu17 compiler flag has been removed."
-    fi
-fi
+ 
