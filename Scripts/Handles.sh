@@ -77,14 +77,14 @@ fi
 
 # 添加并配置 luci-app-athena-led
 ATHENA_LED_DIR="../package/emortal/luci-app-athena-led"
-REPO_URL="https://github.com/Sh1rokoDev/luci-app-athena-led.git"
+REPO_URL="https://github.com/xiaren2/JDC-AX6600-Athena-LED-Controller"
 TEMP_DIR="athena_led_temp"
 
 # 彻底清理旧目录和临时目录
 rm -rf "$ATHENA_LED_DIR" "$TEMP_DIR" 2>/dev/null
 
 # 克隆到临时目录
-if git clone -b LuCI2-JS --depth=1 "$REPO_URL" "$TEMP_DIR"; then
+if git clone -b js --depth=1 "$REPO_URL" "$TEMP_DIR"; then
     echo " "
 
     # 将子文件夹里的内容移动到目标位置
