@@ -197,3 +197,22 @@ elif [ -z "$NIKKI_PKG" ]; then
 	echo " "
 	echo "[skip] nikki backend package not found in feeds/package - skipping GeoSite preinstall"
 fi
+
+# --- 12. 移除源码设备定义 DEVICE_PACKAGES 里的 luci-i18n-* 硬编码（避免 apk 找不到 i18n 子包） ---
+# 背景：xiaren2 的 luci-app-athena-led 不走 luci.mk，不会自动生成 luci-i18n-athena-led-zh-cn 子包，
+#       但 VIKINGYFY 源码 target/linux/qualcommax/image/ipq60xx.mk 里 define Device/jdcloud_re-cs-02 段
+#       写死了 DEVICE_PACKAGES := ... luci-i18n-athena-led-zh-cn。这是个 select 强约束，
+#       即使用户在 .config 删掉符号，defconfig 也会被它拉回 =y，导致 image 阶段 apk 找不到包报错。
+# 方案：从 DEVICE_PACKAGES 行里精准删除 luci-i18n-athena-led-zh-cn（翻译已内嵌在 luci-app 主包，无功能损失）
+IPQ60XX_MK="../target/linux/qualcommax/image/ipq60xx.mk"
+if [ -f "$IPQ60XX_MK" ]; then
+	echo " "
+
+	# 只删除 athena-led 的 i18n 子包（保留其他 luci-i18n-* 不动），保留前导空格匹配避免合并相邻单词
+	sed -i 's| luci-i18n-athena-led-zh-cn||g' "$IPQ60XX_MK"
+
+	cd $PKG_PATH && echo "luci-i18n-athena-led-zh-cn has been removed from ipq60xx.mk DEVICE_PACKAGES!"
+else
+	echo " "
+	echo "[skip] $IPQ60XX_MK not found - skipping i18n cleanup"
+fi
