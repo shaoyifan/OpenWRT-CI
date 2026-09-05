@@ -79,6 +79,7 @@ fi
 ATHENA_LED_DIR="../package/emortal/luci-app-athena-led"
 REPO_URL="https://github.com/xiaren2/JDC-AX6600-Athena-LED-Controller.git"
 TEMP_DIR="athena_led_temp"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 彻底清理旧目录和临时目录
 rm -rf "$ATHENA_LED_DIR" "$TEMP_DIR" 2>/dev/null
@@ -93,17 +94,18 @@ if git clone -b js --depth=1 "$REPO_URL" "$TEMP_DIR"; then
     cp -r "$TEMP_DIR/luci-app-athena-led/"* "$ATHENA_LED_DIR/"
     rm -rf "$TEMP_DIR"
 
-    # MAKEFILE_PATH="$ATHENA_LED_DIR/Makefile"
-    # if [ -f "$MAKEFILE_PATH" ]; then
-    #     # 移除特定的硬件依赖
-    #     sed -i 's/@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02//g' "$MAKEFILE_PATH"
-    #     echo "@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02 remove!"
-    # fi
-	# cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
-    # # 再次确认并设置执行权限
-    # # 注意：如果子文件夹里路径有变化，请检查这里
-    # [ -f "$ATHENA_LED_DIR/root/usr/sbin/athena-led" ] && chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
-    # [ -f "$ATHENA_LED_DIR/root/etc/init.d/athena_led" ] && chmod +x "$ATHENA_LED_DIR/root/etc/init.d/athena_led"
+    # === 用标准化 luci.mk 版 Makefile 覆盖 xiaren2 上游手写 Makefile ===
+    # 背景：xiaren2 js 分支 Makefile 是 include package.mk + 手写 install 段，
+    #       漏装了 root/usr/share/rpcd/acl.d/*.json（导致 web 调 uci 报 RPCError EPERM）
+    # 我们的 patches/athena/Makefile 用 include $(TOPDIR)/feeds/luci/luci.mk 模板，
+    # luci.mk 会自动 install root/ 下所有内容（包括 acl.d）— ACL bug 自愈，无需 sed 注入。
+    OVERRIDE_MK="$SCRIPT_DIR/patches/athena/Makefile"
+    if [ -f "$OVERRIDE_MK" ]; then
+        cp -f "$OVERRIDE_MK" "$ATHENA_LED_DIR/Makefile"
+        echo "[OK] Makefile replaced with luci.mk version (auto ACL install)"
+    else
+        echo "[WARN] $OVERRIDE_MK not found - keeping xiaren2 upstream Makefile"
+    fi
 
     echo "luci-app-athena-led has been added and fixed!"
 fi
@@ -196,23 +198,4 @@ elif [ ! -f "$GEOSITE_SRC" ]; then
 elif [ -z "$NIKKI_PKG" ]; then
 	echo " "
 	echo "[skip] nikki backend package not found in feeds/package - skipping GeoSite preinstall"
-fi
-
-# --- 12. 移除源码设备定义 DEVICE_PACKAGES 里的 luci-i18n-* 硬编码（避免 apk 找不到 i18n 子包） ---
-# 背景：xiaren2 的 luci-app-athena-led 不走 luci.mk，不会自动生成 luci-i18n-athena-led-zh-cn 子包，
-#       但 VIKINGYFY 源码 target/linux/qualcommax/image/ipq60xx.mk 里 define Device/jdcloud_re-cs-02 段
-#       写死了 DEVICE_PACKAGES := ... luci-i18n-athena-led-zh-cn。这是个 select 强约束，
-#       即使用户在 .config 删掉符号，defconfig 也会被它拉回 =y，导致 image 阶段 apk 找不到包报错。
-# 方案：从 DEVICE_PACKAGES 行里精准删除 luci-i18n-athena-led-zh-cn（翻译已内嵌在 luci-app 主包，无功能损失）
-IPQ60XX_MK="../target/linux/qualcommax/image/ipq60xx.mk"
-if [ -f "$IPQ60XX_MK" ]; then
-	echo " "
-
-	# 只删除 athena-led 的 i18n 子包（保留其他 luci-i18n-* 不动），保留前导空格匹配避免合并相邻单词
-	sed -i 's| luci-i18n-athena-led-zh-cn||g' "$IPQ60XX_MK"
-
-	cd $PKG_PATH && echo "luci-i18n-athena-led-zh-cn has been removed from ipq60xx.mk DEVICE_PACKAGES!"
-else
-	echo " "
-	echo "[skip] $IPQ60XX_MK not found - skipping i18n cleanup"
 fi
