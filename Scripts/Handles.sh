@@ -133,3 +133,36 @@ EOF
 fi
 
  
+# --- 9. 精简 qualcommax 平台 cpuusage 脚本的 NSS 输出 ---
+# 原输出: NSS: load 7% freq 748.8MHz
+# 期望输出: NSS: 7%
+CPU_USAGE="../target/linux/qualcommax/base-files/sbin/cpuusage"
+if [ -f "$CPU_USAGE" ]; then
+	echo " "
+
+	# 把 "NSS: load ${nss_load:-N/A} freq ${nss_freq:-N/A}" 简化为 "NSS: ${nss_load:-N/A}"
+	sed -i 's|NSS: load ${nss_load:-N/A} freq ${nss_freq:-N/A}|NSS: ${nss_load:-N/A}|g' $CPU_USAGE
+
+	cd $PKG_PATH && echo "cpuusage has been fixed!"
+fi
+
+# --- 10. 把 LuCI 状态页的 CPU 使用率拆成两行（CPU / NSS ECM） ---
+SYS_10="../feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js"
+if [ -f "$SYS_10" ]; then
+	echo " "
+
+	# 步骤 1：在 var fields = [ 之前插入 4 行解析代码（cuMain / cuEcm）
+	sed -i "/var fields = \[/i\\
+	\\tvar cu = cpuusage.cpuusage || \"?\";\\
+	\\tvar m  = cu.match(/tcp\\\\s+\\\\d+.*total\\\\s+\\\\d+/);\\
+	\\tvar cuMain = m ? cu.replace(/\\\\s*tcp\\\\s+\\\\S+.*\$/, \"\") : cu;\\
+	\\tvar cuEcm  = m ? m[0] : null;\\
+
+	" "$SYS_10"
+
+	# 步骤 2：把 _('CPU usage (%)'), cpuusage.cpuusage 拆成两行（自动多渲染一行 ecm）。
+	# 加 /var cuMain/! 前缀做幂等：已打过补丁的文件里没有 cpuusage.cpuusage，匹配为空，sed 不会重写
+	sed -i "/var cuMain/!s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\\n\\t\\t\\t_('NSS ECM 连接数'),        cuEcm || '?',#" "$SYS_10"
+
+	cd $PKG_PATH && echo "10_system.js has been split!"
+fi
