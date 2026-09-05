@@ -77,14 +77,14 @@ fi
 
 # 添加并配置 luci-app-athena-led
 ATHENA_LED_DIR="../package/emortal/luci-app-athena-led"
-REPO_URL="https://github.com/Sh1rokoDev/luci-app-athena-led.git"
+REPO_URL="https://github.com/xiaren2/JDC-AX6600-Athena-LED-Controller.git"
 TEMP_DIR="athena_led_temp"
 
 # 彻底清理旧目录和临时目录
 rm -rf "$ATHENA_LED_DIR" "$TEMP_DIR" 2>/dev/null
 
 # 克隆到临时目录
-if git clone -b LuCI2-JS --depth=1 "$REPO_URL" "$TEMP_DIR"; then
+if git clone -b js --depth=1 "$REPO_URL" "$TEMP_DIR"; then
     echo " "
 
     # 将子文件夹里的内容移动到目标位置
@@ -93,17 +93,17 @@ if git clone -b LuCI2-JS --depth=1 "$REPO_URL" "$TEMP_DIR"; then
     cp -r "$TEMP_DIR/luci-app-athena-led/"* "$ATHENA_LED_DIR/"
     rm -rf "$TEMP_DIR"
 
-    MAKEFILE_PATH="$ATHENA_LED_DIR/Makefile"
-    if [ -f "$MAKEFILE_PATH" ]; then
-        # 移除特定的硬件依赖
-        sed -i 's/@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02//g' "$MAKEFILE_PATH"
-        echo "@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02 remove!"
-    fi
-	cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
-    # 再次确认并设置执行权限
-    # 注意：如果子文件夹里路径有变化，请检查这里
-    [ -f "$ATHENA_LED_DIR/root/usr/sbin/athena-led" ] && chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
-    [ -f "$ATHENA_LED_DIR/root/etc/init.d/athena_led" ] && chmod +x "$ATHENA_LED_DIR/root/etc/init.d/athena_led"
+    # MAKEFILE_PATH="$ATHENA_LED_DIR/Makefile"
+    # if [ -f "$MAKEFILE_PATH" ]; then
+    #     # 移除特定的硬件依赖
+    #     sed -i 's/@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02//g' "$MAKEFILE_PATH"
+    #     echo "@TARGET_qualcommax_ipq60xx_DEVICE_jdcloud_re-cs-02 remove!"
+    # fi
+	# cp -f "$GITHUB_WORKSPACE/Scripts/patches/athena/athena-led" "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
+    # # 再次确认并设置执行权限
+    # # 注意：如果子文件夹里路径有变化，请检查这里
+    # [ -f "$ATHENA_LED_DIR/root/usr/sbin/athena-led" ] && chmod +x "$ATHENA_LED_DIR/root/usr/sbin/athena-led"
+    # [ -f "$ATHENA_LED_DIR/root/etc/init.d/athena_led" ] && chmod +x "$ATHENA_LED_DIR/root/etc/init.d/athena_led"
 
     echo "luci-app-athena-led has been added and fixed!"
 fi
