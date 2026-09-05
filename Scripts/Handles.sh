@@ -166,3 +166,34 @@ if [ -f "$SYS_10" ]; then
 
 	cd $PKG_PATH && echo "10_system.js has been split!"
 fi
+
+# --- 11. 预置 GeoSite.dat 到 nikki 后端包（编译后镜像自带，免去 mihomo 首次启动下载）---
+# 源：Scripts/patches/nikki/GeoSite.dat（你自己放进去的文件，文件名大小写保留）
+# 目标：nikki/files/run/GeoSite.dat → ipk install 时释放到镜像 /etc/nikki/run/GeoSite.dat
+# 关键修正：GeoSite.dat 不是 luci-app-nikki（纯前端包）的事，是 nikki 后端包 + mihomo 内核的事
+GEOSITE_SRC="$(dirname "$0")/patches/nikki/GeoSite.dat"
+GEOSITE_NAME="$(basename "$GEOSITE_SRC")"
+# 精确锁定 nikki 后端包：grep PKG_NAME:=nikki 排除 luci-app-nikki 干扰
+NIKKI_PKG=$(find ../feeds/luci/applications ../feeds/packages ../package -maxdepth 6 -name "Makefile" 2>/dev/null | xargs grep -l "^PKG_NAME:=nikki$" 2>/dev/null | head -1 | xargs dirname)
+
+if [ -f "$GEOSITE_SRC" ] && [ -n "$NIKKI_PKG" ]; then
+	echo " "
+
+	# 1. 把 GeoSite.dat 放进 nikki/files/run/（保留原文件名大小写）
+	mkdir -p "$NIKKI_PKG/files/run"
+	cp -f "$GEOSITE_SRC" "$NIKKI_PKG/files/run/$GEOSITE_NAME"
+
+	# 2. patch nikki/Makefile 加 install 行（幂等：grep 查 INSTALL_DATA 行已存在则跳过）
+	#    匹配 nikki/Makefile 里 `$(INSTALL_DIR) $(1)/etc/nikki/run` 那行后插入
+	if ! grep -q "files/run/$GEOSITE_NAME" "$NIKKI_PKG/Makefile"; then
+		sed -i "/^\t\$(INSTALL_DIR) \$(1)\/etc\/nikki\/run$/a\\\t\$(INSTALL_DATA) \$(CURDIR)\/files\/run\/$GEOSITE_NAME \$(1)\/etc\/nikki\/run\/$GEOSITE_NAME" "$NIKKI_PKG/Makefile"
+	fi
+
+	cd $PKG_PATH && echo "GeoSite.dat has been placed into nikki package!"
+elif [ ! -f "$GEOSITE_SRC" ]; then
+	echo " "
+	echo "[skip] GeoSite.dat not found at $GEOSITE_SRC - put your file there to enable preinstall"
+elif [ -z "$NIKKI_PKG" ]; then
+	echo " "
+	echo "[skip] nikki backend package not found in feeds/package - skipping GeoSite preinstall"
+fi
