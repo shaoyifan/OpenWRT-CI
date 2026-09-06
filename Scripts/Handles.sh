@@ -162,7 +162,7 @@ if [ -f "$SYS_10" ]; then
 
 	# 步骤 2：把 _('CPU usage (%)'), cpuusage.cpuusage 拆成两行（自动多渲染一行 ecm）。
 	# 加 /var cuMain/! 前缀做幂等：已打过补丁的文件里没有 cpuusage.cpuusage，匹配为空，sed 不会重写
-	sed -i "/var cuMain/!s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\\n\\t\\t\\t_('NSS ECM 连接数'),        cuEcm || '?',#" "$SYS_10"
+	sed -i "/var cuMain/!s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\\n\\t\\t\\t_('NSS连接数'),        cuEcm || '?',#" "$SYS_10"
 
 	cd $PKG_PATH && echo "10_system.js has been split!"
 fi
