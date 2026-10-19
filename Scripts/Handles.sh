@@ -109,19 +109,7 @@ if git clone -b main --depth=1 "$REPO_URL" "$TEMP_DIR"; then
 fi
 
 
-# 修复 AdGuardHome 翻译
-ADG_PATH="../feeds/luci/applications/luci-app-adguardhome"
-PATCH_PO="$GITHUB_WORKSPACE/Scripts/patches/adg/po"
-
-if [ -d "$ADG_PATH" ]; then
-    echo " "
-
-    # 复制翻译文件
-    cp -rf "$PATCH_PO"/* "$ADG_PATH/po/"
-
-    echo "luci-app-adguardhome translations have been fixed!"
-fi
-
+ 
 # --- 8. 添加 AdGuardHome 备份路径到 sysupgrade ---
 SYS_CONF="../package/base-files/files/etc/sysupgrade.conf"
 if [ -f "$SYS_CONF" ]; then
