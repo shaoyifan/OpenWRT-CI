@@ -49,7 +49,7 @@ FIX "natmapt" "$PACKAGE_PATH/luci-app-natmapt" sed -i "s/network/services/g" \
 
 
 # 添加并配置 luci-app-athena-led
-ATHENA_LED_DIR="../package/emortal/luci-app-athena-led"
+ATHENA_LED_DIR="./package/emortal/luci-app-athena-led"
 REPO_URL="https://github.com/shaoyifan/athena-led.git"
 TEMP_DIR="athena_led_temp"
 
@@ -84,7 +84,7 @@ fi
 
 
 # --- 8. 添加 AdGuardHome 备份路径到 sysupgrade ---
-SYS_CONF="../package/base-files/files/etc/sysupgrade.conf"
+SYS_CONF="./package/base-files/files/etc/sysupgrade.conf"
 if [ -f "$SYS_CONF" ]; then
     echo " "
     cat > "$SYS_CONF" <<'EOF'
@@ -97,36 +97,44 @@ fi
 ## --- 9. 精简 qualcommax 平台 cpuusage 脚本的 NSS 输出 ---
 ## 原输出: NSS: load 7% freq 748.8MHz
 ## 期望输出: NSS: 7%
-#CPU_USAGE="../target/linux/qualcommax/base-files/sbin/cpuusage"
+#CPU_USAGE="./target/linux/qualcommax/base-files/sbin/cpuusage"
 #if [ -f "$CPU_USAGE" ]; then
 #	echo " "
 #
 #	# 把 "NSS: load ${nss_load:-N/A} freq ${nss_freq:-N/A}" 简化为 "NSS: ${nss_load:-N/A}"
 #	sed -i 's|NSS: load ${nss_load:-N/A} freq ${nss_freq:-N/A}|NSS: ${nss_load:-N/A}|g' $CPU_USAGE
 #
-#	cd $PKG_PATH && echo "cpuusage has been fixed!"
+#	echo "cpuusage has been fixed!"
 #fi
 #
-## --- 10. 把 LuCI 状态页的 CPU 使用率拆成两行（CPU / NSS ECM） ---
-#SYS_10="../feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js"
-#if [ -f "$SYS_10" ]; then
-#	echo " "
-#
-#	# 步骤 1：在 var fields = [ 之前插入 4 行解析代码（cuMain / cuEcm）
-#	sed -i "/var fields = \[/i\\
-#	\\tvar cu = cpuusage.cpuusage || \"?\";\\
-#	\\tvar m  = cu.match(/tcp\\\\s+\\\\d+.*total\\\\s+\\\\d+/);\\
-#	\\tvar cuMain = m ? cu.replace(/\\\\s*tcp\\\\s+\\\\S+.*\$/, \"\") : cu;\\
-#	\\tvar cuEcm  = m ? m[0] : null;\\
-#
-#	" "$SYS_10"
-#
-#	# 步骤 2：把 _('CPU usage (%)'), cpuusage.cpuusage 拆成两行（自动多渲染一行 ecm）。
-#	# 加 /var cuMain/! 前缀做幂等：已打过补丁的文件里没有 cpuusage.cpuusage，匹配为空，sed 不会重写
-#	sed -i "/var cuMain/!s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\\n\\t\\t\\t_('NSS连接数'),        cuEcm || '?',#" "$SYS_10"
-#
-#	cd $PKG_PATH && echo "10_system.js has been split!"
-#fi
+# --- 10. 首页概览：CPU 行只留 USR/SYS，新增 NSS/PPE 行显示硬件卸载流表数据 ---
+SYS_10="./feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js"
+if [ -f "$SYS_10" ] && ! grep -q "cuNpu" "$SYS_10"; then
+	echo " "
+
+	# 在 var fields = [ 前插入解析代码：按 PPE: 切分 CPU 段；NSS/PPE 各占一行，百分比放在最前
+	awk '/var fields = \[/ && !done {
+		print "\t\tvar cu     = cpuusage.cpuusage || \"\";"
+		print "\t\tvar cuMain = cu.replace(/\\s*PPE:.*$/, \"\").trim();"
+		print "\t\tvar cuNpu  = (cu.match(/PPE:.*$/) || [null])[0];"
+		print "\t\tvar addPct = function(s) {"
+		print "\t\t\treturn s.replace(/(\\d+)\\/(\\d+)/, function(m, a, b) {"
+		print "\t\t\t\treturn b > 0 ? (100 * a / b).toFixed(1) + \"% \" + a + \"/\" + b : m;"
+		print "\t\t\t});"
+		print "\t\t};"
+		print "\t\tif (cuNpu) {"
+		print "\t\t\tvar npu = cuNpu.split(/\\s+(?=NSS:)/).map(addPct);"
+		print "\t\t\tcuNpu = npu[1] ? [ npu[1], E(\"br\"), npu[0] ] : npu[0];"
+		print "\t\t}"
+		done = 1
+	}
+	{ print }' "$SYS_10" > "$SYS_10.tmp" && mv "$SYS_10.tmp" "$SYS_10"
+
+	# CPU 行只显示 USR/SYS；紧跟新增 NSS/PPE 行（流表数据），数组最后一项不带尾逗号
+	sed -i "s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\t\t\t_('NSS/PPE'),                cuNpu || '?'#" "$SYS_10"
+
+	echo "10_system.js has been split (CPU + NSS/PPE)!"
+fi
 
 # --- 11. 预置 GeoSite.dat 到 nikki 后端包（编译后镜像自带，免去 mihomo 首次启动下载）---
 # 源：Scripts/patches/nikki/GeoSite.dat（你自己放进去的文件，文件名大小写保留）
@@ -135,7 +143,7 @@ fi
 GEOSITE_SRC="$(dirname "$0")/patches/nikki/GeoSite.dat"
 GEOSITE_NAME="$(basename "$GEOSITE_SRC")"
 # 精确锁定 nikki 后端包：grep PKG_NAME:=nikki 排除 luci-app-nikki 干扰
-NIKKI_PKG=$(find ../feeds/luci/applications ../feeds/packages ../package -maxdepth 6 -name "Makefile" 2>/dev/null | xargs grep -l "^PKG_NAME:=nikki$" 2>/dev/null | head -1 | xargs dirname)
+NIKKI_PKG=$(find ./feeds/luci/applications ./feeds/packages ./package -maxdepth 6 -name "Makefile" 2>/dev/null | xargs grep -l "^PKG_NAME:=nikki$" 2>/dev/null | head -1 | xargs dirname)
 
 if [ -f "$GEOSITE_SRC" ] && [ -n "$NIKKI_PKG" ]; then
 	echo " "
@@ -150,7 +158,7 @@ if [ -f "$GEOSITE_SRC" ] && [ -n "$NIKKI_PKG" ]; then
 		sed -i "/^\t\$(INSTALL_DIR) \$(1)\/etc\/nikki\/run$/a\\\t\$(INSTALL_DATA) \$(CURDIR)\/files\/run\/$GEOSITE_NAME \$(1)\/etc\/nikki\/run\/$GEOSITE_NAME" "$NIKKI_PKG/Makefile"
 	fi
 
-	cd $PKG_PATH && echo "GeoSite.dat has been placed into nikki package!"
+	echo "GeoSite.dat has been placed into nikki package!"
 elif [ ! -f "$GEOSITE_SRC" ]; then
 	echo " "
 	echo "[skip] GeoSite.dat not found at $GEOSITE_SRC - put your file there to enable preinstall"
