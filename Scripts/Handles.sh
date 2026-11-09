@@ -107,33 +107,31 @@ fi
 #	echo "cpuusage has been fixed!"
 #fi
 #
-# --- 10. 首页概览：CPU 行只留 USR/SYS，新增 NSS/PPE 行显示硬件卸载流表数据 ---
+# --- 10. 首页概览：CPU 行只留 USR/SYS，新增 NSS、PPE 两个独立行（百分比放最前） ---
 SYS_10="./feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js"
-if [ -f "$SYS_10" ] && ! grep -q "cuNpu" "$SYS_10"; then
+if [ -f "$SYS_10" ] && ! grep -q "cuNss" "$SYS_10"; then
 	echo " "
 
-	# 在 var fields = [ 前插入解析代码：按 PPE: 切分 CPU 段；NSS/PPE 各占一行，百分比放在最前
+	# 在 var fields = [ 前插入解析代码。全部用字符串切分，不做任何加工：NSS/PPE 段按原样显示
 	awk '/var fields = \[/ && !done {
 		print "\t\tvar cu     = cpuusage.cpuusage || \"\";"
-		print "\t\tvar cuMain = cu.replace(/\\s*PPE:.*$/, \"\").trim();"
-		print "\t\tvar cuNpu  = (cu.match(/PPE:.*$/) || [null])[0];"
-		print "\t\tvar addPct = function(s) {"
-		print "\t\t\treturn s.replace(/(\\d+)\\/(\\d+)/, function(m, a, b) {"
-		print "\t\t\t\treturn b > 0 ? (100 * a / b).toFixed(1) + \"% \" + a + \"/\" + b : m;"
-		print "\t\t\t});"
-		print "\t\t};"
-		print "\t\tif (cuNpu) {"
-		print "\t\t\tvar npu = cuNpu.split(/\\s+(?=NSS:)/).map(addPct);"
-		print "\t\t\tcuNpu = npu[1] ? [ npu[1], E(\"br\"), npu[0] ] : npu[0];"
+		print "\t\tvar cuMain = cu.split(\" PPE:\")[0].trim();"
+		print "\t\tvar cuRest = cu.indexOf(\"PPE:\") >= 0 ? cu.slice(cu.indexOf(\"PPE:\")) : null;"
+		print "\t\tvar cuNss = null, cuPpe = null;"
+		print "\t\tif (cuRest) {"
+		print "\t\t\tvar seg = cuRest.split(\" NSS:\");"
+		print "\t\t\tcuPpe = seg[0].trim().slice(4).trim();"
+		print "\t\t\tif (seg[1])"
+		print "\t\t\t\tcuNss = seg[1].trim();"
 		print "\t\t}"
 		done = 1
 	}
 	{ print }' "$SYS_10" > "$SYS_10.tmp" && mv "$SYS_10.tmp" "$SYS_10"
 
-	# CPU 行只显示 USR/SYS；紧跟新增 NSS/PPE 行（流表数据），数组最后一项不带尾逗号
-	sed -i "s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\t\t\t_('NSS/PPE'),                cuNpu || '?'#" "$SYS_10"
+	# CPU 行只显示 USR/SYS；紧跟 NSS、PPE 两个独立行，数组最后一项不带尾逗号
+	sed -i "s#_('CPU usage (%)'),[[:space:]]*cpuusage\\.cpuusage#_('CPU usage (%)'),        cuMain,\t\t\t_('NSS'),                cuNss,\t\t\t_('PPE'),                cuPpe#" "$SYS_10"
 
-	echo "10_system.js has been split (CPU + NSS/PPE)!"
+	echo "10_system.js has been split (CPU + NSS + PPE)!"
 fi
 
 # --- 11. 预置 GeoSite.dat 到 nikki 后端包（编译后镜像自带，免去 mihomo 首次启动下载）---
