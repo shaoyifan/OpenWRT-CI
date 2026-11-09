@@ -33,9 +33,9 @@ FIX "theme-aurora" "$PACKAGE_PATH/luci-app-aurora-config" find \
 	"s/nav_type '.*'/nav_type 'dropdown'/g; s/struct_radius_base '.*'/struct_radius_base '0.125rem'/g" {} +
 
 #修改vantage进度条标签字体（anothaDev/luci-theme-vantage#52）
-FIX "theme-vantage" "$PACKAGE_PATH/luci-theme-vantage" sed -i \
-	-e '/^\/\* progress bars: thin track/,$ { /^\.cbi-progressbar::before {/,/^}/ { s/^[[:space:]]*font: 500 var(--fs-micro)\/1\.2 var(--mono);/\tfont: inherit; line-height: normal;/; } }' \
-	"$PACKAGE_PATH/luci-theme-vantage/luci-theme-vantage/htdocs/luci-static/vantage/vantage.css"
+#FIX "theme-vantage" "$PACKAGE_PATH/luci-theme-vantage" sed -i \
+#	-e '/^\/\* progress bars: thin track/,$ { /^\.cbi-progressbar::before {/,/^}/ { s/^[[:space:]]*font: 500 var(--fs-micro)\/1\.2 var(--mono);/\tfont: inherit; line-height: normal;/; } }' \
+#	"$PACKAGE_PATH/luci-theme-vantage/luci-theme-vantage/htdocs/luci-static/vantage/vantage.css"
 
 #修改mini-diskmanager菜单位置
 FIX "mini-diskmanager" "$PACKAGE_PATH/luci-app-mini-diskmanager" sed -i "s/services/system/g" \
