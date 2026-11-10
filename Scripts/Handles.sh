@@ -83,16 +83,6 @@ fi
 
 
 
-# --- 8. 添加 AdGuardHome 备份路径到 sysupgrade ---
-SYS_CONF="./package/base-files/files/etc/sysupgrade.conf"
-if [ -f "$SYS_CONF" ]; then
-    echo " "
-    cat > "$SYS_CONF" <<'EOF'
-/etc/adguardhome/adguardhome.yaml
-EOF
-    echo "sysupgrade backup info has been updated!"
-fi
-
 #
 ## --- 9. 精简 qualcommax 平台 cpuusage 脚本的 NSS 输出 ---
 ## 原输出: NSS: load 7% freq 748.8MHz
