@@ -51,3 +51,13 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 fi
+
+
+#修改jdc 雅典娜 的内核大小为12M
+JDC_IMAGE="./target/linux/qualcommax/image/ipq60xx.mk"
+if [ -f "$JDC_IMAGE" ]; then
+	sed -i "/^define Device\/jdcloud_re-cs-02$/,/^endef$/ s/^\(\s*KERNEL_SIZE\s*:=\).*/\1 12288k/" "$JDC_IMAGE"
+	echo "jdcloud_re-cs-02 kernel size set to 12288k!"
+else
+	echo "WARNING: ipq60xx.mk not found, kernel size untouched!"
+fi
