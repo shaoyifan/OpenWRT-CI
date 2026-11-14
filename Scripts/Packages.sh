@@ -93,9 +93,6 @@ UPDATE_PACKAGE "mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "netmonitor" "LianXia233/luci-app-netmonitor" "main"
 UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
 
-
-
-
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
