@@ -44,13 +44,40 @@ fi
 if [ -n "$RUSTUP_BIN" ]; then
 	PATH="$(dirname "$RUSTUP_BIN"):$PATH"
 	export PATH
+
+	# honk 的 rust-toolchain.toml 只声明 channel+components，不带交叉目标的 std；
+	# 官方 workflow 是单独 rustup target add 的（Makefile 注释 "environment is prepared
+	# by the workflow" 指的就是它）。这里按本 target 的 ARCH_PACKAGES 推导目标三元组，
+	# 与 build.sh 的映射一致：x86_64 → x86_64-unknown-linux-musl，aarch64* → aarch64-...
+	HONK_RUST_TARGET=""
+	case "$(sed -n 's/^CONFIG_TARGET_ARCH_PACKAGES="\?\([^"]*\)"\?/\1/p' .config | head -n 1)" in
+		x86_64)  HONK_RUST_TARGET="x86_64-unknown-linux-musl" ;;
+		aarch64*) HONK_RUST_TARGET="aarch64-unknown-linux-musl" ;;
+		*)
+			echo "WARNING: unsupported ARCH_PACKAGES '$(sed -n 's/^CONFIG_TARGET_ARCH_PACKAGES="\([^"]*\)"/\1/p' .config | head -n 1)' - skipping Rust target add" >&2
+			;;
+	esac
+
 	for toml in "$HONK_SRC_PKG/src/rust-toolchain.toml" \
 		"$HONK_SRC_PKG/src/crates/honk-ebpf/rust-toolchain.toml"; do
 		if [ -f "$toml" ]; then
 			TC=$(awk -F'"' '/^[[:space:]]*channel[[:space:]]*=/{print $2; exit}' "$toml")
 			if [ -n "$TC" ]; then
 				echo "Installing honk pinned Rust toolchain: $TC"
-				rustup toolchain install "$TC" --profile minimal
+				# 显式安装不会应用 toml 里的 components（ebpf 工具链的 rust-src/llvm-tools
+				# 缺了会在编 bpfel-unknown-none 时挂掉），所以从 toml 解析出来一并装
+				HONK_ARGS=(--profile minimal)
+				for COMP in $(sed -n 's/^components[[:space:]]*=[[:space:]]*//p' "$toml" |
+					grep -oE '"[^"]+"' | tr -d '"'); do
+					HONK_ARGS+=(--component "$COMP")
+				done
+				rustup toolchain install "$TC" "${HONK_ARGS[@]}"
+				# 主工作流（honk-core）的工具链需要目标 std；ebpf 工具链编 bpfel-unknown-none，
+				# 用 rust-src（pinned components 已含）从源码出 core，不需要预装 std
+				if [ -n "$HONK_RUST_TARGET" ] && [ "$toml" = "$HONK_SRC_PKG/src/rust-toolchain.toml" ]; then
+					echo "Adding Rust target $HONK_RUST_TARGET to $TC"
+					rustup target add --toolchain "$TC" "$HONK_RUST_TARGET"
+				fi
 			fi
 		else
 			echo "WARNING: $toml not found - honk source missing? (Handles.sh step 12)"
