@@ -202,6 +202,13 @@ jobs:
 
           $GITHUB_WORKSPACE/.github/scripts/prepare-rust.sh
 
+      - name: Prepare honk Toolchain
+        if: ${{ !inputs.WRT_TEST }}
+        run: |
+          cd ./wrt/
+
+          $GITHUB_WORKSPACE/.github/scripts/prepare-honk-toolchain.sh
+
       - name: Download Packages
         if: ${{ !inputs.WRT_TEST }}
         run: |

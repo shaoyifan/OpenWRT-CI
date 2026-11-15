@@ -155,72 +155,44 @@ elif [ -z "$NIKKI_PKG" ]; then
 	echo "[skip] nikki backend package not found in feeds/package - skipping GeoSite preinstall"
 fi
 
-# --- 12. 预置 honk 预编译核心（免去宿主机 zig / bpf-linker / rust nightly 工具链）---
-# 背景：honk/Makefile 在 files/honk-core.bin 不存在时会调 build_honk_core.sh 现场编译，
-#       硬性依赖 zig（版本须精确匹配 Makefile 钉的 pin）+ bpf-linker + rustup nightly/rust-src，
-#       而 build_honk_core.sh 对"有 bin、无 .stamp"直接判定为预编译产物并跳过编译。
-# 做法：从 QiuSimons 同版本 release 取出已编好的 honk-core，预置到 honk/files/honk-core.bin
-HONK_MK="$PACKAGE_PATH/luci-app-honk/honk/Makefile"
-HONK_BIN="$PACKAGE_PATH/luci-app-honk/honk/files/honk-core.bin"
+# --- 12. 拉取 honk main 源码并钉版本（官方 openwrt-packages 配方要求源码预置在 honk/src）---
+# 背景：daeuniverse/openwrt-packages 的 honk 包不带源码，Build/Prepare 硬性要求 honk/src
+#       存在，缺失直接 exit 1；版本默认钉 v0.1.0-beta.6，但 PKG_VERSION/HONK_GIT_TAG 可覆盖。
+# 做法：clone honk main HEAD 进 src，把 HONK_GIT_TAG 钉成 main-<commit>，
+#       面板的"构建"哈希来自源码 checkout（git rev-parse HEAD），如实反映实际构建的代码。
+#       工具链（rustup stable/nightly + bpf-linker）由 prepare-honk-toolchain.sh 在 workflow 中准备。
+HONK_PKG="$PACKAGE_PATH/openwrt-packages/honk"
 
-if [ ! -f "$HONK_MK" ]; then
+if [ ! -f "$HONK_PKG/Makefile" ]; then
 	echo " "
-	echo "[skip] honk package not found - skipping honk-core seed"
-elif [ -f "$HONK_BIN" ] && [ -f "$HONK_BIN.stamp" ]; then
-	echo " "
-	echo "[skip] honk-core already built from source - skipping honk-core seed"
+	echo "[skip] honk package not found - skipping honk source checkout"
 elif ! grep -qs "^CONFIG_PACKAGE_luci-app-honk=y" ./Config/*.txt "${GITHUB_WORKSPACE:-.}"/Config/*.txt; then
 	echo " "
-	echo "[skip] honk not enabled in any config - skipping honk-core seed"
+	echo "[skip] honk not enabled in any config - skipping honk source checkout"
 else
 	echo " "
 
-	# 目标架构：honk 仅支持 aarch64_generic / x86_64，WRT_TARGET 由 workflow 写入环境
-	HONK_ARCH="aarch64_generic"
-	[ "${WRT_TARGET:-}" = "x86" ] && HONK_ARCH="x86_64"
-
-	# tag 规则 honk_${PKG_VERSION(把 ~ 换成 _)}-r${PKG_RELEASE}；不拼文件名，按 API 挑 asset
-	HONK_VER=$(sed -n 's/^PKG_VERSION:=//p' "$HONK_MK" | head -n 1)
-	HONK_REL=$(sed -n 's/^PKG_RELEASE:=//p' "$HONK_MK" | head -n 1)
-	HONK_TAG="honk_$(echo "$HONK_VER" | tr '~' '_')-r${HONK_REL:-1}"
-	HONK_URL=$(curl -sL "https://api.github.com/repos/QiuSimons/luci-app-honk/releases/tags/$HONK_TAG" |
-		jq -r '.assets[]?.browser_download_url' 2>/dev/null | grep -m 1 "_${HONK_ARCH}-openwrt-.*\.ipk$")
-
-	if [ -z "$HONK_URL" ]; then
-		echo "[skip] no honk release asset for $HONK_TAG ($HONK_ARCH) - build will need zig + bpf-linker"
-	else
-		HONK_TMP=$(mktemp -d)
-		HONK_PACK=1
-
-		curl -fsSL -o "$HONK_TMP/honk.ipk" "$HONK_URL" || HONK_PACK=0
-
-		# 解包：ipk 可能是 gzip tar（OpenWrt SDK 24.10 产物），也可能是 ar，两种都试
-		if [ "$HONK_PACK" = 1 ] && ! tar -xzf "$HONK_TMP/honk.ipk" -C "$HONK_TMP" 2>/dev/null; then
-			(cd "$HONK_TMP" && ar x honk.ipk) || HONK_PACK=0
-		fi
-
-		# 成员名带 ./ 前缀（./data.tar.gz），必须按完整名取
-		if [ "$HONK_PACK" = 1 ] &&
-			tar -xzf "$HONK_TMP/data.tar.gz" -C "$HONK_TMP" ./usr/bin/honk-core; then
-			install -m755 "$HONK_TMP/usr/bin/honk-core" "$HONK_BIN"
-			rm -f "$HONK_BIN.stamp"
-
-			# ELF e_machine 自检：aarch64 = b7 00，x86_64 = 3e 00
-			# build_honk_core.sh 只看"有 bin 无 stamp"，不校验架构，错配会被静默接受
-			HONK_MACH=$(od -An -tx1 -j18 -N2 "$HONK_BIN" | tr -d ' \n')
-			case "$HONK_ARCH:$HONK_MACH" in
-				aarch64_generic:b700 | x86_64:3e00)
-					echo "honk-core ($HONK_ARCH) seeded from $HONK_TAG!"
-					;;
-				*)
-					rm -f "$HONK_BIN"
-					echo "[skip] honk-core ELF mismatches $HONK_ARCH ($HONK_MACH) - build will need zig + bpf-linker"
-					;;
-			esac
+	if [ -d "$HONK_PKG/src/.git" ]; then
+		# 重跑场景：更新到当前 main HEAD
+		if git -C "$HONK_PKG/src" fetch --depth=1 origin main -q &&
+			git -C "$HONK_PKG/src" reset --hard -q FETCH_HEAD; then
+			echo "honk source updated to current main!"
 		else
-			echo "[skip] seed honk-core failed - build will need zig + bpf-linker"
+			echo "[warn] honk source update failed - keeping existing checkout"
 		fi
+	elif git clone --depth=1 --branch main https://github.com/daeuniverse/honk "$HONK_PKG/src"; then
+		echo "honk source cloned from main!"
+	else
+		echo "[warn] honk source clone failed - build will fail with 'the source tree is missing'"
+	fi
 
-		rm -rf "$HONK_TMP"
+	HONK_COMMIT=$(git -C "$HONK_PKG/src" rev-parse --short=7 HEAD 2>/dev/null || true)
+	if [ -n "$HONK_COMMIT" ]; then
+		# 只覆盖 HONK_GIT_TAG（进 GITHUB_REF，面板显示的版本字符串），不动 PKG_VERSION，
+		# 避免 apk 对版本号的语法校验被自定义字符串绊住
+		sed -i "s/^HONK_GIT_TAG:=.*/HONK_GIT_TAG:=main-${HONK_COMMIT}/" "$HONK_PKG/Makefile"
+		echo "honk source pinned to main@${HONK_COMMIT}!"
+	else
+		echo "[warn] cannot resolve honk commit - Makefile left at default v0.1.0-beta.6 pin"
 	fi
 fi
