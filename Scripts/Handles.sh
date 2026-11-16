@@ -196,3 +196,24 @@ else
 		echo "[warn] cannot resolve honk commit - Makefile left at default v0.1.0-beta.6 pin"
 	fi
 fi
+
+# --- 13. honk 密钥文件 auth.dae 加入 sysupgrade 保留列表 ---
+# 背景：config.dae 的 experimental.native_api/clash_api 里出现 secret: 后，honk 把该文件
+#       标记为含凭据、doona 拒绝写回，secret 须拆进 include 引用的 /etc/honk/auth.dae；
+#       但 honk 包 conffiles 只含 /etc/config/honk 与 /etc/honk/config.dae，keep.d 只保
+#       /etc/honk/data/，手工新建的 auth.dae 保留配置刷机必丢。这里把路径写进 base-files
+#       的 /etc/sysupgrade.conf（该文件在 owrt 里只是注释模板，覆盖安全；写法幂等）。
+SYS_CONF="./package/base-files/files/etc/sysupgrade.conf"
+if [ -f "$SYS_CONF" ]; then
+	echo " "
+
+	if grep -qs "^/etc/honk/auth.dae$" "$SYS_CONF"; then
+		echo "sysupgrade.conf already keeps /etc/honk/auth.dae!"
+	else
+		echo "/etc/honk/auth.dae" >> "$SYS_CONF"
+		echo "sysupgrade.conf now keeps /etc/honk/auth.dae!"
+	fi
+else
+	echo " "
+	echo "[skip] base-files sysupgrade.conf not found - auth.dae will NOT survive sysupgrade"
+fi
