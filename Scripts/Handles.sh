@@ -128,12 +128,16 @@ fi
 # 源：Scripts/patches/nikki/GeoSite.dat（你自己放进去的文件，文件名大小写保留）
 # 目标：nikki/files/run/GeoSite.dat → ipk install 时释放到镜像 /etc/nikki/run/GeoSite.dat
 # 关键修正：GeoSite.dat 不是 luci-app-nikki（纯前端包）的事，是 nikki 后端包 + mihomo 内核的事
+# 门控：Config 里未启用 luci-app-nikki=y 时直接跳过（feeds 里有包 ≠ 会进镜像）
 GEOSITE_SRC="$(dirname "$0")/patches/nikki/GeoSite.dat"
 GEOSITE_NAME="$(basename "$GEOSITE_SRC")"
 # 精确锁定 nikki 后端包：grep PKG_NAME:=nikki 排除 luci-app-nikki 干扰
 NIKKI_PKG=$(find ./feeds/luci/applications ./feeds/packages ./package -maxdepth 6 -name "Makefile" 2>/dev/null | xargs grep -l "^PKG_NAME:=nikki$" 2>/dev/null | head -1 | xargs dirname)
 
-if [ -f "$GEOSITE_SRC" ] && [ -n "$NIKKI_PKG" ]; then
+if ! grep -qs "^CONFIG_PACKAGE_luci-app-nikki=y" ./Config/*.txt; then
+	echo " "
+	echo "[skip] luci-app-nikki not enabled in Config - skipping GeoSite preinstall"
+elif [ -f "$GEOSITE_SRC" ] && [ -n "$NIKKI_PKG" ]; then
 	echo " "
 
 	# 1. 把 GeoSite.dat 放进 nikki/files/run/（保留原文件名大小写）
